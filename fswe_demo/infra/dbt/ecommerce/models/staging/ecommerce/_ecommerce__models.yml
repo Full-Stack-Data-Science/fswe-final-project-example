@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: stg_ecommerce__ratings
+    description: Staging model for ecommerce ratings data - one record per user-product rating
+    columns:
+      - name: user_id
+        description: Unique identifier for the user who made the rating
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_ecommerce__ratings')
+              field: user_id
+              
+      - name: product_asin
+        description: Amazon Standard Identification Number (ASIN) for the product that was rated
+        tests:
+          - not_null
+          
+      - name: rating_value
+        description: The numeric rating value (1.0 to 5.0)
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1.0, 2.0, 3.0, 4.0, 5.0]
+              
+      - name: rated_at
+        description: Timestamp when the rating was created
+        tests:
+          - not_null
+          
+      - name: rated_date
+        description: Date (day) when the rating was created
+        tests:
+          - not_null
+          
+      - name: is_positive_rating
+        description: Boolean flag indicating if rating is 4.0 or higher
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+              
+      - name: rating_category
+        description: Categorical representation of the rating value
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['very_poor', 'poor', 'average', 'good', 'excellent']
