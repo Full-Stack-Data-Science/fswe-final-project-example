@@ -1,29 +1,24 @@
 from loguru import logger
-from sqlalchemy import create_engine
 
-from fswe_demo.infra.data_source.parquet_reader import ParquetReader
+from fswe_demo.domain.data_ingestion.ports import BulkReadPort, BulkWritePort
 from fswe_demo.settings import settings
 
 
 class IngestRawDataUseCase:
-    """
-    Use case for ingesting raw data from a Parquet file to PostgreSQL.
-    """
+    """Use case for ingesting raw data from a Parquet file to PostgreSQL."""
 
-    def __init__(self):
-        self.parquet_reader = ParquetReader(file_path=settings.data_source_path)
-        self.db_connection = create_engine(
-            f"postgresql+psycopg2://{settings.postgres_user}:{settings.postgres_password.get_secret_value()}@"
-            f"{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}",
-        )
+    def __init__(self, reader: BulkReadPort, writer: BulkWritePort) -> None:
+        self.reader = reader
+        self.writer = writer
 
     def execute(self) -> None:
-        """
-        Executes the data ingestion process.
-        """
+        """Executes the data ingestion process."""
         data_path = settings.data_source_path
 
-        rating_df = self.parquet_reader.read_ratings_parquet()
-        self.parquet_reader.save_to_postgres(rating_df, "ratings", self.db_connection)
-        logger.info("Data ingestion completed successfully.")
-        logger.debug(f"Ingested {len(rating_df)} records from {data_path}.")
+        rating_df = self.reader.read()
+        source_metadata = self.reader.build_entity()
+        logger.info(f"Read {len(rating_df)} records from {data_path}.")
+        logger.info(f"Stats: {source_metadata.model_dump_json()}")
+
+        self.writer.write(rating_df)
+        logger.info(f"Ingested {len(rating_df)} records from {data_path}.")
