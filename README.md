@@ -59,6 +59,8 @@ Edit the `.env` file to match your local configuration. This file contains datab
 Export the environment variables to make them available in your current shell session:
 
 ```sh
+export PROJ_DIR=$(pwd)
+echo "Project directory set to $PROJ_DIR"
 set -a && source .env && set +a
 ```
 
@@ -116,19 +118,51 @@ uv run poe ingest-raw-data
 cd fswe_demo/infra/dbt/ecommerce &&
 cat <<EOF > profiles.yml
 ecommerce:
-    outputs:
-        dev:
-        dbname: $POSTGRES_DB
-        host: $POSTGRES_HOST
-        pass: $POSTGRES_PASSWORD
-        port: $POSTGRES_PORT
-        threads: 1
-        type: postgres
-        user: $POSTGRES_USER
-    target: dev
+  outputs:
+    dev:
+      dbname: $POSTGRES_DB
+      host: $POSTGRES_HOST
+      pass: $POSTGRES_PASSWORD
+      port: $POSTGRES_PORT
+      schema: public
+      threads: 1
+      type: postgres
+      user: $POSTGRES_USER
+  target: dev
 EOF
 )
 ```
 
 This configuration tells DBT how to connect to your PostgreSQL database for data transformations.
 > Tips: Follow [best practices](https://docs.getdbt.com/best-practices) on how to structure and write DBT projects.
+
+After that, check the DBT connection:
+
+```sh
+(cd fswe_demo/infra/dbt/ecommerce && uv run dbt debug --profiles-dir .)
+```
+If `All checks passed!` is shown, the connection is successful.
+
+Then, install DBT dependencies:
+
+```sh
+(cd fswe_demo/infra/dbt/ecommerce && uv run dbt deps --profiles-dir .)
+```
+
+### 8. Build DBT Models
+
+```sh
+(cd fswe_demo/infra/dbt/ecommerce && uv run dbt build --select staging.ecommerce+ intermediate.product_affinity+ --profiles-dir .)
+```
+
+This command will execute the DBT models defined in your project.
+
+### 9 (Optional). View DBT Documentation
+Generate and serve DBT documentation to explore your data models:
+
+```sh
+(cd fswe_demo/infra/dbt/ecommerce && uv run dbt docs generate --profiles-dir .)
+(cd fswe_demo/infra/dbt/ecommerce && uv run dbt docs serve --profiles-dir . --port 8051)
+```
+
+Visit `http://localhost:8051` in your web browser to view the documentation.

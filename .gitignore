@@ -214,3 +214,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# DBT
+.user.yml
+
+notebooks/002_fp_growth_algo copy.ipynb
+notebooks/002_fp_growth_algo copy 2.ipynb

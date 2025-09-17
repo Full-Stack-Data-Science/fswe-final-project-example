@@ -7,12 +7,6 @@ models:
       Each basket represents a collection of products that a user rated on the same date,
       perfect for market basket analysis.
     columns:
-      - name: transaction_id
-        description: Unique identifier for each rating session (user_id + date)
-        tests:
-          - not_null
-          - unique
-          
       - name: user_id
         description: User who rated the products in this basket
         tests:
@@ -22,6 +16,12 @@ models:
         description: Date when all products in this basket were rated
         tests:
           - not_null
+          
+      - name: transaction_id
+        description: Unique identifier for each rating session (user_id + date)
+        tests:
+          - not_null
+          - unique
           
       - name: product_basket
         description: Array of product ASINs rated together on this date
@@ -34,15 +34,3 @@ models:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2
-              
-      - name: basket_type
-        description: Categorical size of the basket
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['pair', 'small_basket', 'medium_basket', 'large_basket']
-              
-      - name: total_combinations
-        description: Total possible product pair combinations in this basket
-        tests:
-          - not_null
