@@ -1,35 +1,56 @@
+from collections.abc import Awaitable, Callable
 from time import time
 
-from fastapi import Request, Response
 from loguru import logger
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+from starlette.types import Message
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self,
         request: Request,
-        call_next: RequestResponseEndpoint,
+        call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         start_time = time()
 
-        # Log request info
-        body = await request.body()
+        # ---- Read/prepare body safely ----
+        if request.method in {"GET", "DELETE"}:
+            logged_body = None
+            logged_query = dict(request.query_params)
+            req_for_downstream = request
+        else:
+            raw_body = await request.body()
+
+            # Re-inject the body so downstream handlers can still read it
+            async def receive() -> Message:
+                return {"type": "http.request", "body": raw_body, "more_body": False}
+
+            req_for_downstream = Request(request.scope, receive)
+
+            try:
+                logged_body = raw_body.decode("utf-8") if raw_body else None
+            except UnicodeDecodeError:
+                logged_body = "<binary body>"
+            logged_query = dict(request.query_params)
+
+        # ---- Log request ----
         logger.info(
-            "Incoming request",
-            extra={
-                "method": request.method,
-                "url": str(request.url),
-                "headers": dict(request.headers),
-                "body": body.decode("utf-8") if body else None,
-            },
+            f"Incoming request | method={request.method} "
+            f"url={request.url} "
+            f"query={logged_query} "
+            f"body={logged_body}",
         )
 
-        response = await call_next(request)
+        # ---- Call endpoint ----
+        response = await call_next(req_for_downstream)
 
-        # Add processing time
+        # ---- Log completion ----
         process_time = time() - start_time
         logger.info(
             f"Completed in {process_time:.3f}s with status {response.status_code}",
         )
+
         return response
