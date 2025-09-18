@@ -1,4 +1,4 @@
-import click
+import click  # noqa: INP001
 
 from fswe_demo.infra.adapters.utils import parquet_to_excel
 

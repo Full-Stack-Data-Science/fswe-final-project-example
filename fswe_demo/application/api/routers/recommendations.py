@@ -1,22 +1,30 @@
-import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from loguru import logger
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import text
 
+from fswe_demo.application.dto.mappers import fpgrowth_recommendation_to_rec_dto
 from fswe_demo.application.dto.recs import (
     Recommendation,
     RecommendationsResponse,
 )
-from fswe_demo.domain.recommendation.exceptions import PopularItemRepoError
+from fswe_demo.domain.recommendation.exceptions import (
+    FPGrowthRecommendationNotFoundError,
+    FPGrowthRecommendationRepoError,
+    PopularItemNotFoundError,
+    PopularItemRepoError,
+)
 from fswe_demo.infra.db.get_conn import get_session
-from fswe_demo.infra.reposistory import PopularItemSQLAlchemyRepository
+from fswe_demo.infra.reposistory import (
+    FPGrowthRecommendationSQLAlchemyRepository,
+    PopularItemSQLAlchemyRepository,
+)
 
 router = APIRouter(prefix="/recs", tags=["recommendations"])
 
 
-@router.get("/popular", response_model=RecommendationsResponse)
+@router.get("/popular")
 def get_item_popularity(
     db_session: Annotated[Session, Depends(get_session)],
     count: int = Annotated[
@@ -28,7 +36,7 @@ def get_item_popularity(
             description="Number of popular items to return",
         ),
     ],
-) -> dict:
+) -> RecommendationsResponse:
     repo = PopularItemSQLAlchemyRepository(db_session)
     try:
         item_popularity_list = repo.get_all()
@@ -44,69 +52,56 @@ def get_item_popularity(
     except PopularItemRepoError as e:
         # Map domain error to HTTP 500
         raise HTTPException(status_code=500, detail=str(e)) from e
+    except PopularItemNotFoundError as e:
+        logger.error("Popular items not found: %s", e)
+        raise HTTPException(status_code=404, detail=str(e)) from e
     return popular_recs_response
 
 
-@router.get("/fpgrowth", response_model=RecommendationsResponse)
+@router.get("/fpgrowth")
 def get_fp_growth_recs(
     db_session: Annotated[Session, Depends(get_session)],
-    asin: Annotated[
+    asin: str = Annotated[
         str,
         Query(
             example="B0BGNG1294",
             description="Amazon ASIN to fetch FP-Growth recommendations",
         ),
     ],
-    fallback_count: Annotated[
-        int,
+    count: int = Annotated[
+        ...,
         Query(
-            example=10,
+            10,
             ge=1,
             le=50,
-            description="Number of popular items to return if no FP-Growth recs found",
+            description="Number of FP-Growth recommendations to return",
         ),
     ],
-) -> dict:
-    """
-    Fetch FP-Growth recommendations for a given ASIN.
+) -> RecommendationsResponse:
+    """Fetch FP-Growth recommendations for a given ASIN.Falls back to popular items if no recs or on repo/DB errors."""
+    fp_repo = FPGrowthRecommendationSQLAlchemyRepository(db_session)
 
-    - Reads raw JSON string from DB
-    - Parses to list of Recommendation objects
-    - Falls back to popular items if no recs
-    """
-    # 1️Try to fetch FP-Growth recommendations
-    sql = text(
-        "SELECT recommendations FROM fpgrowth_product_recommendations "
-        "WHERE product_asin = :asin",
-    )
-    row = db_session.execute(sql, {"asin": asin}).fetchone()
+    try:
+        fp_resp = fp_repo.get(
+            asin,
+        )  # may raise repo errors; may also be None if you adopt that style
 
-    if row and row[0]:
-        try:
-            raw_val = row[0]
-            parsed = json.loads(raw_val)
-            if isinstance(parsed, str):  # handle double-encoded JSON
-                parsed = json.loads(parsed)
+        recs = fpgrowth_recommendation_to_rec_dto(fp_resp)
+        recs = recs.get_recommendations(top_n=count)
 
-            recs = [
-                Recommendation(
-                    product_asin=item["recommendation"][0],
-                    probability=item.get("confidence", 0.0),
-                )
-                for item in parsed
-            ]
-            return RecommendationsResponse(recommendations=recs)
+    except (
+        FPGrowthRecommendationNotFoundError,
+        FPGrowthRecommendationRepoError,
+    ) as e:
+        logger.warning(
+            f"FP-Growth fallback to popular: asin={asin}, "
+            f"error_type={e.__class__.__name__}, reason={e}",
+        )
 
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Parse error: {e}") from e
+        # Rollback the failed transaction before proceeding with fallback
+        db_session.rollback()
+        popular_items_recs = get_item_popularity(db_session, count=count)
+        return popular_items_recs
 
-    # 2️Fallback to popular items if no FP-Growth data
-    popular_sql = text(
-        "SELECT product_asin, prob FROM popular_items ORDER BY prob DESC LIMIT :n",
-    )
-    popular_rows = db_session.execute(popular_sql, {"n": fallback_count}).fetchall()
-    fallback_recs = [
-        Recommendation(product_asin=p_asin, probability=prob)
-        for p_asin, prob in popular_rows
-    ]
-    return RecommendationsResponse(recommendations=fallback_recs)
+    else:
+        return recs

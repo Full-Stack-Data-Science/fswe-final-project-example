@@ -41,9 +41,6 @@ packages = ["fswe_demo"]
 target-version = "py312"
 
 
-[tool.poe.executor]
-type = "uv"                     # so you don't need "uv run ..." in commands
-# load your .env so DB vars are consistent (no Makefile parsing quirks)
 [tool.poe]
 envfile = ".env"                # can also be ["./.env", "./.env.local"]
 [tool.poe.tasks]
