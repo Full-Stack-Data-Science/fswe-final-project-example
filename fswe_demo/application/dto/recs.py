@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class PopularRecommendation(BaseModel):
+class Recommendation(BaseModel):
     product_asin: str = Field(..., description="The ASIN of the product")
     probability: float = Field(
         ...,
@@ -9,17 +9,17 @@ class PopularRecommendation(BaseModel):
     )
 
 
-class PopularRecommendationsResponse(BaseModel):
-    recommendations: list[PopularRecommendation] = Field(
+class RecommendationsResponse(BaseModel):
+    recommendations: list[Recommendation] = Field(
         ...,
         description="List of popular product recommendations",
     )
 
     # Define business logic methods
-    def get_recommendations(self, top_n: int = 10) -> "PopularRecommendationsResponse":
+    def get_recommendations(self, top_n: int = 10) -> "RecommendationsResponse":
         """Get top N popular recommendations."""
         recommendations = self.recommendations[:top_n]
-        return PopularRecommendationsResponse(recommendations=recommendations)
+        return RecommendationsResponse(recommendations=recommendations)
 
 
 class ItemPopularityResponse(BaseModel):
