@@ -223,3 +223,4 @@ notebooks/002_fp_growth_algo copy 2.ipynb
 notebooks/002_fp_growth_algo.ipynb
 notebooks/outputs/*
 !notebooks/outputs/.gitkeep
+uv.lock
