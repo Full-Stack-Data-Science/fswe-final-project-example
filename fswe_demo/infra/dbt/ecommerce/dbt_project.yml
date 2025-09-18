@@ -40,3 +40,5 @@ models:
     # Intermediate models can be ephemeral or views in custom schema
     intermediate:
       +materialized: view
+    mart:
+      +materialized: table

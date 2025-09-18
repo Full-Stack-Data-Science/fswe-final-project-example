@@ -152,7 +152,7 @@ Then, install DBT dependencies:
 ### 8. Build DBT Models
 
 ```sh
-(cd fswe_demo/infra/dbt/ecommerce && uv run dbt build --select staging.ecommerce+ intermediate.product_affinity+ --profiles-dir .)
+(cd fswe_demo/infra/dbt/ecommerce && uv run dbt build --select staging.ecommerce+ intermediate.product_affinity+ mart+ --profiles-dir .)
 ```
 
 This command will execute the DBT models defined in your project.
@@ -166,3 +166,10 @@ Generate and serve DBT documentation to explore your data models:
 ```
 
 Visit `http://localhost:8051` in your web browser to view the documentation.
+
+### 10. Run the Application
+Start the FastAPI application:
+
+```sh
+uv run uvicorn fswe_demo.main:app --host 0.0.0.0 --port 8000
+```
