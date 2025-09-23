@@ -1,6 +1,30 @@
 # Setup and Development Guide
 
-This project is a comprehensive data engineering and analytics platform. Follow this guide to set up your development environment and run the application.
+Follow this guide to set up your development environment and run the application.
+
+## High-Level Architecture Overview
+
+![High-Level Architecture](assets/high-level-arch.png)
+
+This architecture illustrates a batch-driven recommendation workflow from raw data ingestion to end-user delivery:
+
+**Data Ingestion and Staging**
+Raw product interaction data arrives as Excel files and is first ingested into a staging table inside the data warehouse. This layer provides a clean, consistent source for downstream processing.
+
+**Gold Layer – Core Feature Tables**
+From the staging area, curated datasets are created, such as a product-affinity table capturing "bought-together" relationships. These gold tables serve as the foundation for building recommendation models and analytics.
+
+**Mart Layer – Pre-Computed Recommendations**
+Using the gold data, two main types of pre-computed outputs are produced:
+
+- Popular recommendations (e.g., most frequently purchased items)
+- FP-Growth association recommendations (frequent-pattern mining results)
+
+Batch jobs populate these marts on a schedule so that recommendations are always ready for fast retrieval.
+
+**Recommendation API and User Interaction**
+When a user requests suggestions, the Recommendation API queries the mart tables to fetch the latest pre-computed results and returns personalized or popular recommendations back to the user in real time.
+
 
 ## Prerequisites
 
@@ -247,3 +271,19 @@ Start the FastAPI application:
 ```sh
 uvicorn fswe_demo.main:app --host 0.0.0.0 --port 8000
 ```
+
+The application will be available at `http://localhost:8000`. You can access the interactive API documentation at `http://localhost:8000/docs`.
+
+### API Sequence Diagrams
+
+The following sequence diagrams illustrate how the recommendation APIs work internally:
+
+### Popular Items API Flow
+![Popular Item API Sequence Diagram](assets/popular_sequence_diagram.png)
+
+This diagram shows the flow when a user requests popular item recommendations. The API queries the pre-computed popular items from the mart layer and returns the results.
+
+### FP-Growth Recommendations API Flow
+![FP-Growth API Sequence Diagram](assets/fpgrowth_sequence_diagram.png)
+
+This diagram illustrates the flow for FP-Growth association rule recommendations. The API retrieves pre-computed association rules from the mart layer based on user input and returns personalized recommendations.
