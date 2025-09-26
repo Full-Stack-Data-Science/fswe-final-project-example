@@ -11,19 +11,19 @@ This architecture illustrates a batch-driven recommendation workflow from raw da
 **Data Ingestion and Staging**
 Raw product interaction data arrives as Excel files and is first ingested into a staging table inside the data warehouse. This layer provides a clean, consistent source for downstream processing.
 
-**Gold Layer – Core Feature Tables**
-From the staging area, curated datasets are created, such as a product-affinity table capturing "bought-together" relationships. These gold tables serve as the foundation for building recommendation models and analytics.
+**Silver Layer – Feature Tables**
+From the staging area, curated datasets are created, such as a product-affinity table capturing "bought-together" relationships. These silver tables serve as the foundation for building recommendation models and analytics.
 
-**Mart Layer – Pre-Computed Recommendations**
-Using the gold data, two main types of pre-computed outputs are produced:
+**Gold Layer – Pre-Computed Recommendations**
+Using the silver combined with bronze data, two main types of pre-computed outputs are produced:
 
 - Popular recommendations (e.g., most frequently purchased items)
 - FP-Growth association recommendations (frequent-pattern mining results)
 
-Batch jobs populate these marts on a schedule so that recommendations are always ready for fast retrieval.
+Batch jobs populate these gold tables on a schedule so that recommendations are always ready for fast retrieval.
 
 **Recommendation API and User Interaction**
-When a user requests suggestions, the Recommendation API queries the mart tables to fetch the latest pre-computed results and returns personalized or popular recommendations back to the user in real time.
+When a user requests suggestions, the Recommendation API queries the gold tables to fetch the latest pre-computed results and returns personalized or popular recommendations back to the user in real time.
 
 
 ## Prerequisites
