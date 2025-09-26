@@ -12,7 +12,7 @@ This architecture illustrates a batch-driven recommendation workflow from raw da
 Raw product interaction data arrives as Excel files and is first ingested into a staging table inside the data warehouse. This layer provides a clean, consistent source for downstream processing.
 
 **Silver Layer – Feature Tables**
-From the staging area, curated datasets are created, such as a product-affinity table capturing "bought-together" relationships. These silver tables serve as the foundation for building recommendation models and analytics.
+From the staging area, feature datasets are created, such as a product-affinity table capturing "rated-together" relationships. These silver tables serve as the foundation for building FP-Growth recommendation models.
 
 **Gold Layer – Pre-Computed Recommendations**
 Using the silver combined with bronze data, two main types of pre-computed outputs are produced:
@@ -281,9 +281,9 @@ The following sequence diagrams illustrate how the recommendation APIs work inte
 ### Popular Items API Flow
 ![Popular Item API Sequence Diagram](assets/popular_sequence_diagram.png)
 
-This diagram shows the flow when a user requests popular item recommendations. The API queries the pre-computed popular items from the mart layer and returns the results.
+This diagram shows the flow when a user requests popular item recommendations. The API queries the pre-computed popular items from the gold layer and returns the results.
 
 ### FP-Growth Recommendations API Flow
 ![FP-Growth API Sequence Diagram](assets/fpgrowth_sequence_diagram.png)
 
-This diagram illustrates the flow for FP-Growth association rule recommendations. The API retrieves pre-computed association rules from the mart layer based on user input and returns personalized recommendations.
+This diagram illustrates the flow for FP-Growth association rule recommendations. The API retrieves pre-computed association rules from the gold layer based on user input and returns personalized recommendations.
