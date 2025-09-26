@@ -1,0 +1,12 @@
+ecommerce:
+  outputs:
+    dev:
+      dbname: amazon_rating
+      host: 0.0.0.0
+      pass: fswe
+      port: 5432
+      schema: public
+      threads: 1
+      type: postgres
+      user: fswe
+  target: dev

@@ -1,7 +1,7 @@
 import click  # noqa: INP001
 
 TASKS = {
-    "ingest_raw_data": "pipelines.ingest_raw:ingest_raw_data",
+    "ingest_raw_data": "pipelines.ingest_raw:ingest_raw_data_from_excel",
     # future_task: "module:function",
 }
 

@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: int_product_baskets
+    description: >
+      Creates transaction-like baskets of products rated together by the same user within 1 day.
+      Each basket represents a collection of products that a user rated on the same date,
+      perfect for market basket analysis.
+    columns:
+      - name: user_id
+        description: User who rated the products in this basket
+        tests:
+          - not_null
+          
+      - name: rated_date
+        description: Date when all products in this basket were rated
+        tests:
+          - not_null
+          
+      - name: transaction_id
+        description: Unique identifier for each rating session (user_id + date)
+        tests:
+          - not_null
+          - unique
+          
+      - name: product_basket
+        description: Array of product ASINs rated together on this date
+        tests:
+          - not_null
+          
+      - name: basket_size
+        description: Number of unique products in this basket
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2

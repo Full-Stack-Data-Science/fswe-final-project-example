@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: ecommerce
+    description: Raw ecommerce data from our internal systems
+    schema: public
+    tables:
+      - name: ratings
+        description: Raw ratings data containing user ratings for products
+        columns:
+          - name: parent_asin
+            description: Product ASIN (Amazon Standard Identification Number) that was rated
+            tests:
+              - not_null
+          - name: user_id
+            description: User identifier who made the rating
+            tests:
+              - not_null
+          - name: rating
+            description: Rating value given by the user
+            tests:
+              - not_null
+              - accepted_values:
+                  values: [1.0, 2.0, 3.0, 4.0, 5.0]
+          - name: timestamp
+            description: Timestamp when the rating was created
+            tests:
+              - not_null

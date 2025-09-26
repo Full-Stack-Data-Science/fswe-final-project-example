@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     postgres_port: str
 
     # Data source settings
-    data_source_path: str = "data/rating_sample.parquet"
+    data_source_path: str = "data/rating_sample.xlsx"
 
 
 settings = Settings()
